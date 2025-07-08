@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"os"
 )
 
 func formatMoney(value int, currency string)string{
@@ -33,10 +34,37 @@ func PrintAccounts(accounts []accountdb.Account){
 	}
 }
 
+func HandleEntry(query string){
+	entries := strings.Split(query, " ")
+	fmt.Printf("Обновляю: %s\n", query);
+	value, err := strconv.ParseInt(entries[0], 10, 64)
+	if err != nil {
+		fmt.Printf("Ошибка обновления: %w\n", err);
+		return
+	}
+	name := entries[1]
+	err = accountdb.UpdateRecord(name, value)
+	if err != nil {
+		fmt.Printf("Ошибка обновления: %w\n", err);
+		fmt.Printf("%s %d\n", name, len(name));
+	} else {
+		fmt.Printf("Обновлено: %d %s\n", value, name);
+		fmt.Printf("%s %d\n", name, len(name));
+	}
+}
+
 func main(){
 	err := appContext.Init()
     if err !=  nil {
 		panic(err)
+	}
+	fileData, err := os.ReadFile("logs/input")
+    if err != nil {
+        panic(err) 
+    }
+	queiries := strings.Split(string(fileData), "\r\n")
+	for _, query := range queiries {
+		HandleEntry(query)
 	}
 	amds, err := accountdb.GetAccountsByCurrency("amd")
 	if err !=  nil {

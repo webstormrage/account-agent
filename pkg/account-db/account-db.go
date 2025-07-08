@@ -1,10 +1,12 @@
 package accountdb
 
 import (
-	"database/sql"
-	_ "github.com/lib/pq"
-	"time"
 	appContext "account-agent/pkg/appContext"
+	"database/sql"
+	"fmt"
+	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type Account struct {
@@ -73,4 +75,30 @@ func GetReportByCurrency(currency string)(*Report, error) {
 		return nil, err
 	}
 	return &report, err
+}
+
+func UpdateRecord(name string, value int64)error{
+	ctx := appContext.Get()
+	db, err := sql.Open("postgres", ctx.DataSourceName)
+    if err != nil {
+      return err
+    }
+	defer db.Close()
+	// findQuery := `SELECT id FROM accounts WHERE name=`+name;
+	// fmt.Printf("Поиск: %s\n", findQuery)
+	row := db.QueryRow(`SELECT id FROM accounts WHERE name=$1`, name)
+	var id int64
+	err = row.Scan(&id)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Найдено совпадение: %d %s\n", id, name)
+	query := "UPDATE accounts " +
+    "SET value=$1 " +
+    "WHERE id=$2"
+	_, err = db.Exec(query, value, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
